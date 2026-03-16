@@ -1,0 +1,148 @@
+databaseChangeLog:
+  - changeSet:
+      id: 003-split-owners-table
+      author: kaddlz
+      changes:
+        - createTable:
+            tableName: owners_basic
+            columns:
+              - column:
+                  name: id
+                  type: int
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+              - column:
+                  name: first_name
+                  type: varchar(20)
+              - column:
+                  name: last_name
+                  type: varchar(20)
+
+        - createTable:
+            tableName: owners_contact
+            columns:
+              - column:
+                  name: owner_id
+                  type: int
+                  constraints:
+                    primaryKey: true
+                    references: owners_basic(id)
+                    foreignKeyName: owner_contact_owner_id_fk
+              - column:
+                  name: address
+                  type: varchar(255)
+              - column:
+                  name: city
+                  type: varchar(30)
+              - column:
+                  name: telephone
+                  type: varchar(20)
+        - sql:
+            sql: |
+              INSERT INTO owners_basic (id, first_name, last_name)
+              SELECT id, first_name, last_name FROM owners;
+              INSERT INTO owners_contact (owner_id, address, city, telephone)
+              SELECT id, address, city, telephone FROM owners;
+
+        - sql:
+            dbms: h2
+            sql: |
+              ALTER TABLE owners_basic ALTER COLUMN id RESTART WITH (
+              SELECT COALESCE(MAX(id), 0) + 1
+              FROM owners_basic
+              );
+
+        - sql:
+            dbms: postgresql
+            sql: |
+              SELECT setval('owners_basic_id_seq', (SELECT MAX(id) FROM owners_basic) + 1, false);
+
+        - dropForeignKeyConstraint:
+            baseTableName: pets
+            constraintName: pet_owner_id_fk
+
+        - addForeignKeyConstraint:
+            baseTableName: pets
+            baseColumnNames: owner_id
+            constraintName: pet_owner_id_fk
+            referencedTableName: owners_basic
+            referencedColumnNames: id
+
+        - dropTable:
+            tableName: owners
+
+      rollback:
+        - createTable:
+            tableName: owners
+            columns:
+              - column:
+                  name: id
+                  type: int
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+              - column:
+                  name: first_name
+                  type: varchar(20)
+              - column:
+                  name: last_name
+                  type: varchar(20)
+              - column:
+                  name: address
+                  type: varchar(255)
+              - column:
+                  name: city
+                  type: varchar(30)
+              - column:
+                  name: telephone
+                  type: varchar(20)
+
+        - createIndex:
+            indexName: owners_last_name_index
+            tableName: owners
+            columns:
+              - column:
+                  name: last_name
+
+        - sql:
+            sql: |
+              INSERT INTO owners (id, first_name, last_name, address, city, telephone)
+              SELECT id, first_name, last_name, address, city, telephone
+              FROM owners_basic
+              JOIN owners_contact ON owners_basic.id = owners_contact.owner_id;
+
+        - sql:
+            dbms: h2
+            sql: |
+              ALTER TABLE owners ALTER COLUMN id RESTART WITH (
+              SELECT COALESCE(MAX(id), 0) + 1
+              FROM owners
+              );
+
+        - sql:
+            dbms: postgresql
+            sql: |
+              SELECT setval('owners_id_seq', (SELECT MAX(id) FROM owners) + 1, false);
+
+        - dropForeignKeyConstraint:
+            baseTableName: pets
+            constraintName: pet_owner_id_fk
+
+        - dropForeignKeyConstraint:
+            baseTableName: owners_contact
+            constraintName: owner_contact_owner_id_fk
+
+        - addForeignKeyConstraint:
+            baseTableName: pets
+            baseColumnNames: owner_id
+            constraintName: pet_owner_id_fk
+            referencedTableName: owners
+            referencedColumnNames: id
+
+        - dropTable:
+            tableName: owners_basic
+
+        - dropTable:
+            tableName: owners_contact
+
