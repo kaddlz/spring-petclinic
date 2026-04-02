@@ -8,3 +8,6 @@ databaseChangeLog:
   - include:
       relativeToChangelogFile: true
       file: changesets/003-split-owners-table.yml
+  - include:
+      relativeToChangelogFile: true
+      file: changesets/004-add-bill-to-visits-table.xml
