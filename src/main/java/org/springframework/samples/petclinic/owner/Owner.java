@@ -15,24 +15,16 @@
  */
 package org.springframework.samples.petclinic.owner;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-
+import jakarta.persistence.*;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
 import org.springframework.core.style.ToStringCreator;
 import org.springframework.samples.petclinic.model.Person;
 import org.springframework.util.Assert;
 
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.OrderBy;
-import jakarta.persistence.Table;
-import jakarta.validation.constraints.Pattern;
-import jakarta.validation.constraints.NotBlank;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
 
 /**
  * Simple JavaBean domain object representing an owner.
@@ -45,49 +37,53 @@ import jakarta.validation.constraints.NotBlank;
  * @author Wick Dynex
  */
 @Entity
-@Table(name = "owners")
+@Table(name = "owners_basic")
 public class Owner extends Person {
 
-	@Column
-	@NotBlank
-	private String address;
-
-	@Column
-	@NotBlank
-	private String city;
-
-	@Column
-	@NotBlank
-	@Pattern(regexp = "\\d{10}", message = "{telephone.invalid}")
-	private String telephone;
+	@OneToOne(mappedBy = "owner", cascade = CascadeType.ALL, orphanRemoval = true)
+	@Valid
+	private OwnerContact contact;
 
 	@OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
 	@JoinColumn(name = "owner_id")
 	@OrderBy("name")
 	private final List<Pet> pets = new ArrayList<>();
 
+	public Owner(OwnerContact contact) {
+		this.contact = contact;
+		this.contact.setOwner(this);
+	}
+
+	public Owner() {
+		this.contact = new OwnerContact();
+		this.contact.setOwner(this);
+	}
+
+	@NotBlank
 	public String getAddress() {
-		return this.address;
+		return this.contact.getAddress();
 	}
 
 	public void setAddress(String address) {
-		this.address = address;
+		this.contact.setAddress(address);
 	}
 
+	@NotBlank
 	public String getCity() {
-		return this.city;
+		return this.contact.getCity();
 	}
 
 	public void setCity(String city) {
-		this.city = city;
+		this.contact.setCity(city);
 	}
 
+	@NotBlank
 	public String getTelephone() {
-		return this.telephone;
+		return this.contact.getTelephone();
 	}
 
 	public void setTelephone(String telephone) {
-		this.telephone = telephone;
+		this.contact.setTelephone(telephone);
 	}
 
 	public List<Pet> getPets() {
@@ -150,9 +146,9 @@ public class Owner extends Person {
 			.append("new", this.isNew())
 			.append("lastName", this.getLastName())
 			.append("firstName", this.getFirstName())
-			.append("address", this.address)
-			.append("city", this.city)
-			.append("telephone", this.telephone)
+			.append("address", this.contact.getAddress())
+			.append("city", this.contact.getCity())
+			.append("telephone", this.contact.getTelephone())
 			.toString();
 	}
 
