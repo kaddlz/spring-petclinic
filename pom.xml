@@ -101,6 +101,11 @@
       <artifactId>spring-boot-liquibase</artifactId>
     </dependency>
     <dependency>
+      <groupId>org.mapstruct</groupId>
+      <artifactId>mapstruct</artifactId>
+      <version>1.6.3</version>
+    </dependency>
+    <dependency>
       <groupId>org.webjars</groupId>
       <artifactId>webjars-locator-lite</artifactId>
       <version>${webjars-locator.version}</version>
@@ -341,6 +346,20 @@
                 <phase>generate-resources</phase>
               </execution>
             </executions>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-compiler-plugin</artifactId>
+            <version>3.13.0</version>
+            <configuration>
+              <annotationProcessorPaths>
+                <path>
+                  <groupId>org.mapstruct</groupId>
+                  <artifactId>mapstruct-processor</artifactId>
+                  <version>1.6.3</version>
+                </path>
+              </annotationProcessorPaths>
+            </configuration>
           </plugin>
         </plugins>
       </build>
